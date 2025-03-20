@@ -46,19 +46,14 @@ export function DashboardNav() {
       icon: Users,
     },
     {
-      title: "Products",
-      href: "/products",
+      title: "Rides",
+      href: "/rides",
       icon: Package,
     },
     {
-      title: "Analytics",
-      href: "/analytics",
+      title: "Feedback",
+      href: "/feedback",
       icon: BarChart3,
-    },
-    {
-      title: "Reports",
-      href: "/reports",
-      icon: FileText,
     },
     {
       title: "Settings",
