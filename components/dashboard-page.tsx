@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Overview } from "@/components/overview"
-import { RecentSales } from "@/components/recent-sales"
+import { UserData } from "@/components/user-data"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { auth, db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
 import { useRouter } from "next/navigation"
+import { User } from "@/lib/props"
 
 export function DashboardPage() {
   const [stats, setStats] = useState({
@@ -19,6 +20,7 @@ export function DashboardPage() {
     totalRevenue: 0,
     newCustomers: 0,
   })
+  const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
   const router = useRouter()
@@ -46,9 +48,18 @@ export function DashboardPage() {
       const usersSnapshot = await getDocs(collection(db, "users"))
       const usersCount = usersSnapshot.size
 
+      // setting users data for visuals
+      const usersData = usersSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+      })) as User[]
+      setUsers(usersData)
+
       // Mock data for other stats
       setStats({
         totalUsers: usersCount,
+
+        // Fake data
         activeUsers: Math.floor(usersCount * 0.7),
         totalRevenue: 15799.0,
         newCustomers: Math.floor(usersCount * 0.3),
@@ -178,7 +189,7 @@ export function DashboardPage() {
             <CardDescription>Latest user registrations.</CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentSales />
+            <UserData users={users} />
           </CardContent>
         </Card>
       </div>

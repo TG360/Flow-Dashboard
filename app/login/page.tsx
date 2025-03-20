@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Package } from "lucide-react"
+import { db } from "@/lib/firebase"
+import { doc, getDoc } from "firebase/firestore"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -35,7 +37,13 @@ export default function LoginPage() {
 
     try {
       setIsLoading(true)
-      await signInWithEmailAndPassword(auth, email, password)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+      const userDoc = await (await getDoc(doc(db, "users", user.uid))).data()
+      if(userDoc?.role !== "admin") {
+        throw new Error("You are not authorized to access this dashboard")
+      }
+      
       toast({
         title: "Success",
         description: "You have been logged in successfully",

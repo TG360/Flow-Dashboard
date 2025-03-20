@@ -28,6 +28,7 @@ export default function RegisterPage() {
     e.preventDefault()
 
     if (!name || !email || !password || !confirmPassword) {
+      console.log("Not all fields are filled")
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -54,7 +55,7 @@ export default function RegisterPage() {
       await setDoc(doc(db, "users", user.uid), {
         name,
         email,
-        role: "user",
+        role: "admin",
         createdAt: new Date().toISOString(),
       })
 
@@ -72,6 +73,7 @@ export default function RegisterPage() {
       })
     } finally {
       setIsLoading(false)
+      console.log("Registration complete")
     }
   }
 

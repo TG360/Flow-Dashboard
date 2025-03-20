@@ -40,13 +40,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-  createdAt: string
-}
+import { User } from "@/lib/props"
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
@@ -76,15 +70,21 @@ export default function UsersPage() {
     checkAuth()
   }, [router])
 
+  useEffect(() => {
+    console.log("Updated Users State:", users)
+  }, [users])
+
   const fetchUsers = async () => {
     try {
       setIsLoading(true)
       const usersSnapshot = await getDocs(collection(db, "users"))
+      
       const usersData = usersSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as User[]
 
+      console.log("Processed Users Data:", usersData)
       setUsers(usersData)
     } catch (error) {
       console.error("Error fetching users:", error)
@@ -100,8 +100,8 @@ export default function UsersPage() {
 
   const handleEdit = (user: User) => {
     setSelectedUser(user)
-    setEditName(user.name)
-    setEditRole(user.role)
+    setEditName(user.firstName || "")
+    setEditRole(user.accountStatus || "unverified")
     setIsEditDialogOpen(true)
   }
 
@@ -115,11 +115,11 @@ export default function UsersPage() {
 
     try {
       await updateDoc(doc(db, "users", selectedUser.id), {
-        name: editName,
-        role: editRole,
+        firstName: editName,
+        accountStatus: editRole,
       })
 
-      setUsers(users.map((user) => (user.id === selectedUser.id ? { ...user, name: editName, role: editRole } : user)))
+      setUsers(users.map((user) => (user.id === selectedUser.id ? { ...user, firstName: editName, accountStatus: editRole } : user)))
 
       toast({
         title: "User updated",
@@ -159,9 +159,9 @@ export default function UsersPage() {
 
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchQuery.toLowerCase()),
+      (user.firstName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (user.emailAddress?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (user.accountStatus?.toLowerCase() || '').includes(searchQuery.toLowerCase()),
   )
 
   return (
@@ -188,7 +188,7 @@ export default function UsersPage() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -209,22 +209,20 @@ export default function UsersPage() {
             ) : (
               filteredUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="font-medium">{user.firstName || 'N/A'}</TableCell>
+                  <TableCell>{user.emailAddress || 'N/A'}</TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        user.role === "admin"
-                          ? "bg-blue-100 text-blue-800"
-                          : user.role === "editor"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                        user.accountStatus === "verified"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {user.role}
+                      {user.accountStatus || 'unverified'}
                     </span>
                   </TableCell>
-                  <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -270,16 +268,15 @@ export default function UsersPage() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="role" className="text-right">
-                Role
+                Status
               </Label>
               <Select value={editRole} onValueChange={setEditRole}>
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select a role" />
+                  <SelectValue placeholder="Select a status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="unverified">Unverified</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
                 </SelectContent>
               </Select>
             </div>
